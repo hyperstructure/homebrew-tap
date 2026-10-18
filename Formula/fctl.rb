@@ -32,10 +32,11 @@ class Fctl < Formula
   end
 
   def install
-    # The archive carries fctl and the Linux agent that sandboxes run
-    # (fctl-agent-<arch>-linux); fctl looks for the agent next to itself.
     bin.install "fctl"
-    bin.install Dir["fctl-agent-*-linux"]
+    # The archive also carries the Linux agent that sandboxes run, which fctl
+    # looks for next to itself. On macOS it isn't an executable Homebrew
+    # accepts in bin; fctl downloads it, checked against its SHA-256, on first use.
+    bin.install Dir["fctl-agent-*-linux"] if OS.linux?
 
     generate_completions_from_executable(bin/"fctl", "completions")
   end
