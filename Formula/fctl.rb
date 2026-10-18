@@ -1,9 +1,9 @@
 class Fctl < Formula
   desc "Software factory for Claude Code: agents in sandboxes on your own machine"
   homepage "https://fctl.sh"
-  version "0.7.0"
   url "https://fctl.sh/releases/v0.7.0/fctl-x86_64-unknown-linux-musl.tar.gz"
   sha256 "661a5ebb1798bb0788706d5c8a85cc1e924d47487ecec42c5bc0d5c4701294cf"
+  version "0.7.0"
   license "MIT"
 
   livecheck do
