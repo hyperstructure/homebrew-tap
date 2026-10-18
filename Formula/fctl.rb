@@ -1,6 +1,7 @@
 class Fctl < Formula
   desc "Software factory for Claude Code: agents in sandboxes on your own machine"
   homepage "https://fctl.sh"
+  version "0.7.0"
   url "https://fctl.sh/releases/v0.7.0/fctl-x86_64-unknown-linux-musl.tar.gz"
   sha256 "661a5ebb1798bb0788706d5c8a85cc1e924d47487ecec42c5bc0d5c4701294cf"
   license "MIT"
@@ -34,7 +35,7 @@ class Fctl < Formula
     bin.install "fctl"
     bin.install Dir["fctl-agent-*-linux"]
 
-    generate_completions_from_executable(bin/"fctl", "completions", shell_parameter_format: :arg)
+    generate_completions_from_executable(bin/"fctl", "completions")
   end
 
   def caveats
