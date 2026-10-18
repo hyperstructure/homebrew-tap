@@ -4,11 +4,6 @@ class Fctl < Formula
   version "0.7.0"
   license "MIT"
 
-  livecheck do
-    url "https://fctl.sh/releases/latest"
-    regex(/^v?(\d+(?:\.\d+)+)$/i)
-  end
-
   on_macos do
     on_arm do
       url "https://fctl.sh/releases/v0.7.0/fctl-aarch64-apple-darwin.tar.gz"
@@ -29,6 +24,11 @@ class Fctl < Formula
       url "https://fctl.sh/releases/v0.7.0/fctl-x86_64-unknown-linux-musl.tar.gz"
       sha256 "661a5ebb1798bb0788706d5c8a85cc1e924d47487ecec42c5bc0d5c4701294cf"
     end
+  end
+
+  livecheck do
+    url "https://fctl.sh/releases/latest"
+    regex(/^v?(\d+(?:\.\d+)+)$/i)
   end
 
   def install
