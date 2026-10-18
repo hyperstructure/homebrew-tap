@@ -1,11 +1,12 @@
 class Fctl < Formula
   desc "Software factory for Claude Code: agents in sandboxes on your own machine"
   homepage "https://fctl.sh"
+  url "https://fctl.sh/releases/v0.7.0/fctl-x86_64-unknown-linux-musl.tar.gz"
+  sha256 "661a5ebb1798bb0788706d5c8a85cc1e924d47487ecec42c5bc0d5c4701294cf"
   license "MIT"
 
   livecheck do
-    # The cop reads this url as the formula's first (so, a stable) one.
-    url "https://fctl.sh/releases/latest" # rubocop:disable FormulaAudit/LivecheckUrlSymbol
+    url "https://fctl.sh/releases/latest"
     regex(/^v?(\d+(?:\.\d+)+)$/i)
   end
 
@@ -24,10 +25,6 @@ class Fctl < Formula
     on_arm do
       url "https://fctl.sh/releases/v0.7.0/fctl-aarch64-unknown-linux-musl.tar.gz"
       sha256 "ed8b1c9beb7db36716eb11bee2759814aff2be432b5b892d94125f3f00cc74a0"
-    end
-    on_intel do
-      url "https://fctl.sh/releases/v0.7.0/fctl-x86_64-unknown-linux-musl.tar.gz"
-      sha256 "661a5ebb1798bb0788706d5c8a85cc1e924d47487ecec42c5bc0d5c4701294cf"
     end
   end
 
