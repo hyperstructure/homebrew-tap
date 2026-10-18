@@ -32,7 +32,7 @@
         "strict_required_status_checks_policy": true,
         "required_status_checks": [
           { "context": "test-bot (macos-26)", "integration_id": 15368 },
-          { "context": "test-bot (ubuntu-latest)", "integration_id": 15368 },
+          { "context": "test-bot (ubuntu-latest, ghcr.io/homebrew/brew:main, --privileged)", "integration_id": 15368 },
           { "context": "zizmor", "integration_id": 15368 }
         ]
       }
