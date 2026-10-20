@@ -4,6 +4,9 @@ class Fctl < Formula
   url "https://fctl.sh/releases/v0.7.0/fctl-aarch64-apple-darwin.tar.gz"
   sha256 "5942fb24994035538ebc518c68314d6e4336d8ce5197dbf39078cfa07d4d7d59"
   license "MIT"
+  # Intel Macs got 0.7.0 as version "64-apple-darwin", which sorts above every
+  # release, so brew upgrade only replaces it under a new version scheme.
+  version_scheme 1
 
   livecheck do
     url "https://fctl.sh/releases/latest"
