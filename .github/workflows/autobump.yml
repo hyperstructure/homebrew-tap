@@ -8,11 +8,23 @@ on:
     paths:
       - .github/workflows/autobump.yml
       - .github/scripts/bump-formulae.sh
+  # fctl's Release workflow starts this as soon as a release is on fctl.sh:
+  # gh workflow run autobump.yml -R hyperstructure/homebrew-tap -f version=0.14.0
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Wait until livecheck finds this fctl version, or a newer one
+        required: false
   schedule:
-    # Every day at 6:15 UTC
+    # Every day at 6:15 UTC too, in case a release didn't start it
     - cron: 15 6 * * *
 
 permissions: {}
+
+# One run at a time, so that two don't both propose the same version.
+concurrency:
+  group: autobump
+  cancel-in-progress: false
 
 defaults:
   run:
@@ -34,6 +46,25 @@ jobs:
 
       - name: Set up git
         uses: Homebrew/actions/git-user-config@eb02c69dbabdb66ff183c614f4ce7ab3c077592c # 2026.10.12.1
+
+      # fctl.sh caches releases/latest for a minute, so just after a release
+      # livecheck can still find the version before it.
+      - name: Wait for livecheck to find the release
+        if: inputs.version
+        env:
+          FORMULA: ${{ steps.set-up-homebrew.outputs.tap-name }}/fctl
+          VERSION: ${{ inputs.version }}
+        run: |
+          for _ in {1..10}; do
+            latest="$(brew livecheck --formula "$FORMULA" --json | jq -r '.[0].version.latest // empty')"
+            # A newer version will do: fctl may have released again since.
+            if [[ -n "$latest" ]] && printf '%s\n' "${VERSION#v}" "$latest" | sort --version-sort --check=quiet; then
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "::error::livecheck didn't find fctl ${VERSION#v} or newer in 5 minutes (it found ${latest:-none})."
+          exit 1
 
       # Not `brew bump`, which can't update a formula with an archive per OS
       # and architecture (see the script).

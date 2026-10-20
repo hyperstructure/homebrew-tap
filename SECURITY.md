@@ -11,7 +11,9 @@ reports within three working days.
 - Formulae download only from `https://fctl.sh/releases` and pin each archive
   by SHA-256. When livecheck finds a new release, the `brew bump` workflow
   (`.github/scripts/bump-formulae.sh`) rewrites the version, URLs and checksums
-  in a pull request that a person reviews.
+  in a pull request that a person reviews. fctl's Release workflow starts it
+  as soon as a release is out, with a token that can use this repository's
+  Actions and nothing else; it also runs every day.
 - Workflows start with `permissions: {}`, grant each job only what it needs,
   and pin every action to a commit SHA (Dependabot keeps them current;
   zizmor lints them).
