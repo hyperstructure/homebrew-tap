@@ -107,7 +107,7 @@ bump() {
   if [[ -n "${GITHUB_RUN_ID:-}" ]]; then
     body+="
 
-Opened by ${GITHUB_SERVER_URL:?}/${GITHUB_REPOSITORY:?}/actions/runs/${GITHUB_RUN_ID}. Workflows don't start on pull requests that a workflow opens with its \`GITHUB_TOKEN\`, so close and reopen this one to run the tests."
+Opened by ${GITHUB_SERVER_URL:?}/${GITHUB_REPOSITORY:?}/actions/runs/${GITHUB_RUN_ID}. GitHub holds the checks on pull requests that a workflow opens with its \`GITHUB_TOKEN\`: select **Approve workflows to run** to start them."
   fi
 
   git checkout --quiet -b "${branch}"
