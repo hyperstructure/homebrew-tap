@@ -103,11 +103,11 @@ bump() {
     return
   fi
 
-  body="Livecheck found ${name} ${latest}. This updates the URL, version and checksum for every OS and architecture; \`brew fetch --all-platforms\` checked each archive against its checksum, and \`brew audit\` passed on each of them."
+  body="Livecheck found ${name} ${latest}. This updates the URL, version and checksum for every OS and architecture, and \`brew fetch --all-platforms\` and \`brew audit --os=all --arch=all\` passed."
   if [[ -n "${GITHUB_RUN_ID:-}" ]]; then
     body+="
 
-Opened by ${GITHUB_SERVER_URL:?}/${GITHUB_REPOSITORY:?}/actions/runs/${GITHUB_RUN_ID}. Workflows don't start on pull requests opened with a workflow's \`GITHUB_TOKEN\`, so close and reopen this one to run the tests."
+Opened by ${GITHUB_SERVER_URL:?}/${GITHUB_REPOSITORY:?}/actions/runs/${GITHUB_RUN_ID}. Workflows don't start on pull requests that a workflow opens with its \`GITHUB_TOKEN\`, so close and reopen this one to run the tests."
   fi
 
   git checkout --quiet -b "${branch}"
