@@ -112,8 +112,11 @@ Opened by ${GITHUB_SERVER_URL:?}/${GITHUB_REPOSITORY:?}/actions/runs/${GITHUB_RU
 
   git checkout --quiet -b "${branch}"
   git commit --quiet --message="${name} ${latest}" -- "${path}"
-  git push --quiet origin "${branch}"
-  gh pr create --base "${base}" --head "${branch}" --title "${name} ${latest}" --body "${body}"
+  # No pull request has the branch (see above), but a run that failed to open
+  # one may have pushed it.
+  git push --quiet --force origin "${branch}"
+  gh pr create --base "${base}" --head "${branch}" --title "${name} ${latest}" --body "${body}" ||
+    fail "Couldn't open the pull request for ${branch}; the next run tries again. Workflows can open pull requests only with \"Allow GitHub Actions to create and approve pull requests\" on, in Settings → Actions → General."
   git checkout --quiet "${base}"
 }
 
