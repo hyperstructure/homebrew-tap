@@ -36,8 +36,9 @@ jobs:
     permissions:
       contents: write
       # Opening the pull request also needs "Allow GitHub Actions to create and
-      # approve pull requests" on, in Settings → Actions → General. That lets
-      # workflows approve pull requests too, but main still needs a code owner's.
+      # approve pull requests" on, in Settings → Actions → General (and in the
+      # organization's, when it's greyed out here). That lets workflows approve
+      # pull requests too, but main still needs a code owner's.
       pull-requests: write
     steps:
       - name: Set up Homebrew
