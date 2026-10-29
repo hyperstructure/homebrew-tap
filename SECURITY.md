@@ -15,9 +15,9 @@ reports within three working days.
   in a pull request, and merges it once its checks pass. fctl's Release
   workflow starts it as soon as a release is out, with a token that can use
   this repository's Actions and nothing else; it also runs every day.
-- The bump workflow opens and merges those pull requests as the bump app, a
-  GitHub App that may merge a pull request without a code owner's approval,
-  but not push to `main` or skip its checks. It merges only the commit it
+- The bump workflow opens and merges those pull requests as the bump app,
+  the organization's fctl-actions GitHub App, which may merge a pull request
+  without a code owner's approval, but not push to `main` or skip its checks. It merges only the commit it
   pushed. The app's key is a secret of the `production` environment, which
   only `main` may use, so workflows on other branches can't act as the app.
 - Workflows start with `permissions: {}`, grant each job only what it needs,

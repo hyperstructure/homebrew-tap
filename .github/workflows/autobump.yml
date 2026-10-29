@@ -49,10 +49,10 @@ jobs:
       # request: GitHub holds the checks on a pull request that GITHUB_TOKEN
       # opens until a person approves them, and only the app may merge
       # without a code owner's approval (.github/rulesets/main-reviews.json).
-      # It is the organization's GitHub App for this, installed on this
-      # repository alone, with Contents and Pull requests read and write; its
-      # client ID and key are BUMP_APP_CLIENT_ID and BUMP_APP_PRIVATE_KEY in
-      # the production environment.
+      # It is the organization's fctl-actions GitHub App (App ID 5532905),
+      # with Contents and Pull requests read and write; its client ID and key
+      # are BUMP_APP_CLIENT_ID and BUMP_APP_PRIVATE_KEY in the production
+      # environment.
       - name: Create a token for the bump app
         id: app-token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
