@@ -5,15 +5,18 @@
 # and sha256, so the archives in on_macos, on_linux, on_arm and on_intel blocks
 # would keep the old version.
 #
-# Usage: .github/scripts/bump-formulae.sh TAP [--dry-run]
+# Usage: .github/scripts/bump-formulae.sh TAP [--dry-run | --merge]
 #
 # With --dry-run it updates the formulae in the tap but doesn't commit, push or
-# open pull requests.
+# open pull requests. With --merge it merges each pull request it opens once
+# the checks that the tap's main branch requires pass on it, which takes a
+# token that may merge without a code owner's approval. It reads the checks
+# with CHECKS_TOKEN when that is set, since that token may lack Checks.
 
 set -euo pipefail
 
-tap="${1:?Usage: $0 TAP [--dry-run]}"
-dry_run="${2:-}"
+tap="${1:?Usage: $0 TAP [--dry-run | --merge]}"
+mode="${2:-}"
 
 # Prints an error, as an annotation on GitHub Actions, and exits.
 fail() {
@@ -24,6 +27,11 @@ fail() {
   fi >&2
   exit 1
 }
+
+case "${mode}" in
+  "" | --dry-run | --merge) ;;
+  *) fail "Unknown option ${mode}; usage: $0 TAP [--dry-run | --merge]" ;;
+esac
 
 # Replaces each FROM in FILE with TO, as plain strings, failing if there's none.
 replace() {
@@ -49,14 +57,69 @@ sources_of() {
     | [.url, (.url | split($current) | join($latest)), .checksum // ""] | @tsv'
 }
 
+# Prints the state of each of the checks REQUIRED (JSON, from the rules API)
+# in the check runs on stdin, as "STATE<tab>CHECK": pass, fail or pending. The
+# newest run of a check counts, as on GitHub, and neutral and skipped ones pass.
+states_of() {
+  jq -r --argjson required "$1" '.check_runs as $runs | $required[] as $check
+    | [$runs[] | select(.name == $check.context and .app.id == ($check.integration_id // .app.id))]
+    | max_by(.id)
+    | [if . == null or .status != "completed" then "pending"
+       elif .conclusion == "success" or .conclusion == "neutral" or .conclusion == "skipped" then "pass"
+       else "fail" end,
+       $check.context]
+    | @tsv'
+}
+
+# Merges the pull request URL once the checks that the base branch requires
+# pass on COMMIT, which must still be its head. Fails, leaving it open for a
+# person, if one of them fails or they take more than 45 minutes.
+merge() {
+  local url="$1" commit="$2" read_token="${CHECKS_TOKEN:-${GH_TOKEN:-}}" errors=0 required states failed
+  required="$(GH_TOKEN="${read_token}" gh api "repos/{owner}/{repo}/rules/branches/${base}" \
+    --jq '[.[] | select(.type == "required_status_checks") | .parameters.required_status_checks[]] | unique')"
+  if [[ "${required}" == "[]" ]]; then
+    fail "${base} requires no checks, so ${url} would merge untested; it stays open for a person to merge."
+  fi
+
+  echo "Waiting for the checks ${base} requires to pass on ${url}"
+  for _ in {1..90}; do
+    sleep 30
+    # GitHub's API fails now and then, but not five times in a row: then the
+    # token can't read check runs.
+    if ! states="$(GH_TOKEN="${read_token}" gh api "repos/{owner}/{repo}/commits/${commit}/check-runs?per_page=100" |
+      states_of "${required}")"; then
+      if ((++errors == 5)); then
+        fail "Couldn't read the checks on ${url} five times in a row, so it stays open for a person to merge."
+      fi
+      continue
+    fi
+    errors=0
+    failed="$(awk -F '\t' '$1 == "fail" { printf "%s%s", sep, $2; sep = "; " }' <<<"${states}")"
+    if [[ -n "${failed}" ]]; then
+      fail "${failed} failed on ${url}, so it stays open for a person to fix and merge."
+    fi
+    if ! grep -q '^pending' <<<"${states}"; then
+      # --admin merges without a code owner's approval, which only the bump
+      # app may (.github/rulesets/main-reviews.json); GitHub still holds the
+      # merge to the checks. --match-head-commit keeps out anything pushed
+      # to the branch since.
+      gh pr merge "${url}" --squash --admin --match-head-commit "${commit}" ||
+        fail "Couldn't merge ${url}, so it stays open for a person to merge."
+      return
+    fi
+  done
+  fail "The checks on ${url} didn't finish in 45 minutes, so it stays open for a person to merge."
+}
+
 bump() {
   local name="$1" current="$2" latest="$3"
   local formula="${tap}/${name}" branch="bump-${name}-${latest}"
-  local prs info path versions sources url new_url checksum new_checksum body
+  local prs info path versions sources url new_url checksum new_checksum body commit pr
 
   echo "==> ${formula} ${current} -> ${latest}"
 
-  if [[ -z "${dry_run}" ]]; then
+  if [[ "${mode}" != --dry-run ]]; then
     prs="$(gh pr list --head "${branch}" --state all --json url --jq '.[].url')"
     if [[ -n "${prs}" ]]; then
       echo "Already proposed in ${prs}"
@@ -98,7 +161,7 @@ bump() {
   brew fetch --formula --all-platforms --build-from-source "${formula}"
   brew audit --formula --os=all --arch=all "${formula}"
 
-  if [[ -n "${dry_run}" ]]; then
+  if [[ "${mode}" == --dry-run ]]; then
     git --no-pager diff -- "${path}"
     return
   fi
@@ -107,17 +170,28 @@ bump() {
   if [[ -n "${GITHUB_RUN_ID:-}" ]]; then
     body+="
 
-Opened by ${GITHUB_SERVER_URL:?}/${GITHUB_REPOSITORY:?}/actions/runs/${GITHUB_RUN_ID}. GitHub holds the checks on pull requests that a workflow opens with its \`GITHUB_TOKEN\`: select **Approve workflows to run** to start them."
+Opened by ${GITHUB_SERVER_URL:?}/${GITHUB_REPOSITORY:?}/actions/runs/${GITHUB_RUN_ID}"
+    if [[ "${mode}" == --merge ]]; then
+      body+=", which merges it once the checks that ${base} requires pass. If one fails, it stays open for a person to fix and merge."
+    else
+      body+="."
+    fi
   fi
 
   git checkout --quiet -b "${branch}"
   git commit --quiet --message="${name} ${latest}" -- "${path}"
+  commit="$(git rev-parse HEAD)"
   # No pull request has the branch (see above), but a run that failed to open
   # one may have pushed it.
   git push --quiet --force origin "${branch}"
-  gh pr create --base "${base}" --head "${branch}" --title "${name} ${latest}" --body "${body}" ||
-    fail "Couldn't open the pull request for ${branch}; the next run tries again. Workflows can open pull requests only with \"Allow GitHub Actions to create and approve pull requests\" on, in Settings → Actions → General."
+  pr="$(gh pr create --base "${base}" --head "${branch}" --title "${name} ${latest}" --body "${body}")" ||
+    fail "Couldn't open the pull request for ${branch}; the next run tries again."
+  echo "Opened ${pr}"
   git checkout --quiet "${base}"
+
+  if [[ "${mode}" == --merge ]]; then
+    merge "${pr}" "${commit}"
+  fi
 }
 
 repository="$(brew --repository "${tap}")"

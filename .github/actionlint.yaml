@@ -1,0 +1,7 @@
+# brew style lints the workflows with actionlint, using this file instead of
+# Homebrew's own configuration when the tap has one.
+self-hosted-runner:
+  labels: []
+# The configuration variables the workflows use; actionlint flags any other.
+config-variables:
+  - BUMP_APP_CLIENT_ID
