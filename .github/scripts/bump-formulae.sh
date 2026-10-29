@@ -10,7 +10,8 @@
 # With --dry-run it updates the formulae in the tap but doesn't commit, push or
 # open pull requests. With --merge it merges each pull request it opens once
 # the checks that the tap's main branch requires pass on it, which takes a
-# token that may merge without a code owner's approval.
+# token that may merge without a code owner's approval. It reads the checks
+# with CHECKS_TOKEN when that is set, since that token may lack Checks.
 
 set -euo pipefail
 
@@ -74,8 +75,8 @@ states_of() {
 # pass on COMMIT, which must still be its head. Fails, leaving it open for a
 # person, if one of them fails or they take more than 45 minutes.
 merge() {
-  local url="$1" commit="$2" required states failed
-  required="$(gh api "repos/{owner}/{repo}/rules/branches/${base}" \
+  local url="$1" commit="$2" read_token="${CHECKS_TOKEN:-${GH_TOKEN:-}}" errors=0 required states failed
+  required="$(GH_TOKEN="${read_token}" gh api "repos/{owner}/{repo}/rules/branches/${base}" \
     --jq '[.[] | select(.type == "required_status_checks") | .parameters.required_status_checks[]] | unique')"
   if [[ "${required}" == "[]" ]]; then
     fail "${base} requires no checks, so ${url} would merge untested; it stays open for a person to merge."
@@ -84,9 +85,16 @@ merge() {
   echo "Waiting for the checks ${base} requires to pass on ${url}"
   for _ in {1..90}; do
     sleep 30
-    # GitHub's API fails now and then; the next try may not.
-    states="$(gh api "repos/{owner}/{repo}/commits/${commit}/check-runs?per_page=100" | states_of "${required}")" ||
+    # GitHub's API fails now and then, but not five times in a row: then the
+    # token can't read check runs.
+    if ! states="$(GH_TOKEN="${read_token}" gh api "repos/{owner}/{repo}/commits/${commit}/check-runs?per_page=100" |
+      states_of "${required}")"; then
+      if ((++errors == 5)); then
+        fail "Couldn't read the checks on ${url} five times in a row, so it stays open for a person to merge."
+      fi
       continue
+    fi
+    errors=0
     failed="$(awk -F '\t' '$1 == "fail" { printf "%s%s", sep, $2; sep = "; " }' <<<"${states}")"
     if [[ -n "${failed}" ]]; then
       fail "${failed} failed on ${url}, so it stays open for a person to fix and merge."

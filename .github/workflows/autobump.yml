@@ -40,6 +40,9 @@ jobs:
     # merge pull requests that no code owner approved.
     environment: production
     permissions:
+      # The script reads the pull request's checks with GITHUB_TOKEN, so that
+      # the bump app needs no access to checks.
+      checks: read
       contents: read
     steps:
       # The bump app, not GITHUB_TOKEN, pushes, opens and merges the pull
@@ -93,6 +96,7 @@ jobs:
       - name: Bump formulae
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          CHECKS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAP_NAME: ${{ steps.set-up-homebrew.outputs.tap-name }}
         run: |
