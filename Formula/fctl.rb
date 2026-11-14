@@ -1,8 +1,8 @@
 class Fctl < Formula
   desc "Software factory for Claude Code: agents in sandboxes on your own machine"
   homepage "https://fctl.sh"
-  url "https://fctl.sh/releases/v0.34.0/fctl-aarch64-apple-darwin.tar.gz"
-  sha256 "6d182129033d44d8d8af3ef75c9deb030892522e2018c9241ef3f2bcae77baa5"
+  url "https://fctl.sh/releases/v0.34.1/fctl-aarch64-apple-darwin.tar.gz"
+  sha256 "76a2568f3430b37cdf48a904d508ae2e42a660aa6d7b21e4db299c1ff73479fe"
   license "MIT"
   # Intel Macs got 0.7.0 as version "64-apple-darwin", which sorts above every
   # release, so brew upgrade only replaces it under a new version scheme.
@@ -17,21 +17,21 @@ class Fctl < Formula
   # finds "64-apple-darwin" or "64-unknown-linux-musl" first, so those set it.
   on_macos do
     on_intel do
-      url "https://fctl.sh/releases/v0.34.0/fctl-x86_64-apple-darwin.tar.gz"
-      version "0.34.0"
-      sha256 "7b91cb59b2c70a477508513e845714f117b6664682897767ef7e85d810d08240"
+      url "https://fctl.sh/releases/v0.34.1/fctl-x86_64-apple-darwin.tar.gz"
+      version "0.34.1"
+      sha256 "f5cb30738b585b03528547840f49feb625f458ef775e91b0511107664c980491"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://fctl.sh/releases/v0.34.0/fctl-aarch64-unknown-linux-musl.tar.gz"
-      sha256 "7ba3afa0cb5cb62d722285b4821342d0d402dc076d04b781bcfa740538a5f4c9"
+      url "https://fctl.sh/releases/v0.34.1/fctl-aarch64-unknown-linux-musl.tar.gz"
+      sha256 "9a9e89f55c7c3862d0132ccbcae47f6888d2b34dc18937b9ee07d7d38bb0b62d"
     end
     on_intel do
-      url "https://fctl.sh/releases/v0.34.0/fctl-x86_64-unknown-linux-musl.tar.gz"
-      version "0.34.0"
-      sha256 "d50571ab290569ce36ae1f34b0ca6c3ea6845e1e9adf51ad403d46abab125268"
+      url "https://fctl.sh/releases/v0.34.1/fctl-x86_64-unknown-linux-musl.tar.gz"
+      version "0.34.1"
+      sha256 "bf13b2a6a92373831e1cc1c310173604b463998415f8d9e3aa79f9fccb376a6e"
     end
   end
 
